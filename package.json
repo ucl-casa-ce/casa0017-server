@@ -1,0 +1,17 @@
+{
+  "name": "casa0017-server",
+  "version": "1.0.0",
+  "description": "FlickrData API Server",
+  "main": "flickrDataServer.js",
+  "scripts": {
+    "start": "node flickrDataServer.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "ejs": "3.1.10",
+    "express": "^4.17.1",
+    "moment": "^2.29.1",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.15.2"
+  }
+}

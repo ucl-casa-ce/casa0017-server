@@ -1,0 +1,38 @@
+
+services:
+  app:
+    build: .
+    ports:
+      - "${NODE_PORT}:${NODE_PORT}"
+    volumes:
+      - .:/usr/src/app
+      # Use a named volume for node_modules to avoid overwriting it
+      - node_modules:/usr/src/app/node_modules
+    depends_on:
+      - db
+    env_file:
+      - .env
+    # Wait for the database to be ready before starting the app
+    command: >
+      sh -c "while ! nc -z db 3306; do sleep 1; done && npm start"
+
+  db:
+    image: mysql:lts
+    # command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      # Mount the init script to be run on startup
+      - ./z_db:/docker-entrypoint-initdb.d
+      # Persist database data
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
+  node_modules:
