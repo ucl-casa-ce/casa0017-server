@@ -35,6 +35,7 @@ app.set('view engine', 'ejs');
 app.use(express.static(__dirname + '/js'));
 app.use(express.static(__dirname + '/css'));
 app.use(express.static(__dirname + '/images'));
+app.use(express.static(__dirname + '/data'));
 
 // Default API Endpoint - return the index.ejs file in the views folder
 app.get('/', function(req, res) {
