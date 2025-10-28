@@ -32,10 +32,9 @@ var app = express()
 app.set('view engine', 'ejs');
 
 // Provides the static folders we have added in the project to the web server.
-app.use(express.static(__dirname + '/js'));
-app.use(express.static(__dirname + '/css'));
-app.use(express.static(__dirname + '/images'));
-app.use(express.static(__dirname + '/download'));
+app.use('/js', express.static(__dirname + '/js'));
+app.use('/css', express.static(__dirname + '/css'));
+app.use('/download', express.static(__dirname + '/download'));
 
 // Default API Endpoint - return the index.ejs file in the views folder
 app.get('/', function(req, res) {
