@@ -1,6 +1,6 @@
 {
   "name": "casa0017-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "FlickrData API Server",
   "main": "flickrDataServer.js",
   "scripts": {

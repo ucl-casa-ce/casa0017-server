@@ -1,32 +1,1022 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>Flickr API Information</title>
-<link href='http://fonts.googleapis.com/css?family=Raleway:400,700' rel='stylesheet' type='text/css'>
-<link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
-<link rel="stylesheet" href="./css/style.css" type="text/css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CASA0017 Flickr Data API Server</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/modal.js"></script>
 </head>
-
 <body>
-	<div id="container">
-		<h1>
-			Flickr DB API
-		</h1>
-	
-		<h2>
-	 		Data Endpoints
-		</h2>
 
-		<p>
-			<%= process.env.URL_HOST %>/data/:lat/:lon/:radius - <a href="<%= process.env.URL_HOST %>/data/51.514756/-0.104345/50" target="_BLANK">Example</a><br/>
-			<b>Returns all photos inside our flickr photo databse with a radius (in meters) for a given lat/lng point</b>
-		</p>	
-	
-		<p>
-			<%= process.env.URL_HOST %>/data/photoDescription/:pid - <a href="<%= process.env.URL_HOST %>/data/photoDescription/4279893539" target="_BLANK">Example</a> <br/>
-			<b>Returns a single photos metadata inside our flickr photo databse for a given Photo ID</b>
-		</p>
-	</div>
-	
-	<script src="./js/jquery.min.js"></script>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span>📸 Flickr DB API</span>
+        <span class="brand-badge">CASA0017</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#stats" class="nav-link">📊 Dataset Stats</a></li>
+        <li><a href="#endpoints" class="nav-link">📖 Endpoints</a></li>
+        <li><a href="/examples/map" class="nav-link">🗺️ Live Map Demo</a></li>
+        <li><a href="/examples/cameras" class="nav-link">📷 Top Cameras</a></li>
+        <li><a href="/examples/photo/4279893539" class="nav-link">🔍 Photo Inspector</a></li>
+        <li><a href="#architecture" class="nav-link">🏗️ Architecture</a></li>
+        <li><a href="#downloads" class="nav-link">💾 Datasets</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="main-wrapper">
+    <!-- Hero Section -->
+    <header class="hero">
+      <div class="hero-meta">
+        <span class="hero-tag">UCL Connected Environments</span>
+        <span class="hero-tag">CASA0017 Web Architecture</span>
+        <span class="hero-tag">Workshops 2 &amp; 7</span>
+      </div>
+      <h1 class="hero-title">Flickr Geospatial &amp; Metadata API</h1>
+      <p class="hero-subtitle">
+        Explore 37,500+ geotagged Flickr photos across the UK, query spatial radius circles using Great-Circle distance calculations, inspect EXIF camera device metadata, and connect real-time APIs to interactive web maps.
+      </p>
+
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="/examples/map" class="btn btn-primary">
+          <span>🗺️ Open Interactive Map Visualizer</span>
+        </a>
+        <a href="#endpoints" class="btn btn-secondary">
+          <span>🔍 Explore &amp; Test Endpoints</span>
+        </a>
+        <a href="#downloads" class="btn btn-secondary">
+          <span>💾 Download Datasets</span>
+        </a>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="hero-stats">
+        <div class="stat-card">
+          <div class="stat-value">📍 37,500+</div>
+          <div class="stat-label">Geotagged UK Photo Locations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">🌐 Great-Circle</div>
+          <div class="stat-label">MySQL Spherical Distance (km)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">📷 30+ Types</div>
+          <div class="stat-label">EXIF Camera Device Models</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">⚡ REST API</div>
+          <div class="stat-label">CORS Enabled • JSON Responses</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Architecture & Coursework Note -->
+    <section id="architecture" class="card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="card-title">🏗️ How This API Works in Workshops 8 &amp; 9</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="margin-bottom: 1rem; color: var(--text-muted);">
+          In CASA0017, you build client-side web applications (such as Leaflet maps or data dashboards) that consume spatial databases through a REST API. This server bridges your web browser and the MySQL database:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+            <div style="font-weight: 700; color: var(--primary); margin-bottom: 0.25rem;">1. Browser Request</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Your client script uses JavaScript <code>fetch()</code> or <code>$.getJSON()</code> to call an API endpoint with coordinates or camera parameters.
+            </p>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+            <div style="font-weight: 700; color: var(--accent); margin-bottom: 0.25rem;">2. Spatial SQL Query</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              The server runs <code>DISTANCE(points, POINT(lon, lat)) &lt;= radius</code> in MySQL to find points inside the circle in kilometers.
+            </p>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+            <div style="font-weight: 700; color: var(--success); margin-bottom: 0.25rem;">3. JSON Response &amp; Map</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              The server returns JSON arrays. Your web app loops over the records to plot Leaflet markers and popups on the map.
+            </p>
+          </div>
+        </div>
+
+        <div style="background: #e0f2fe; border-left: 4px solid var(--primary); padding: 0.85rem 1rem; border-radius: 4px; font-size: 0.9rem;">
+          <b>📐 Great-Circle Distance Function:</b> Distance calculation uses the custom MySQL function:<br>
+          <code style="font-size: 0.8rem; color: #0369a1;">CREATE FUNCTION distance(a POINT, b POINT) RETURNS double DETERMINISTIC RETURN ifnull(acos(sin(X(a)) * sin(X(b)) + cos(X(a)) * cos(X(b)) * cos(Y(b) - Y(a))) * 6380, 0)</code>
+          <br><span style="font-size: 0.8rem; color: #64748b;">(Multiplies by 6380 km, representing the mean radius of the Earth).</span>
+        </div>
+      </div>
+    <!-- Dataset Statistics & Complete Collection Access Section -->
+    <section id="stats" class="card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="card-title">📊 Dataset Statistics &amp; Complete Collection Access</span>
+        </div>
+        <span class="badge" style="background: var(--primary-light); color: var(--primary); font-size: 0.8rem; font-weight: 700; padding: 2px 10px; border-radius: 999px;">37,517 Geotagged Records</span>
+      </div>
+      <div class="card-body">
+        <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+          The dataset powers the UCL CASA0017 Connected Environments spatial workshops. It comprises geotagged photos uploaded to Flickr in early 2010 across the United Kingdom, joined with EXIF device capture metadata and spatial geometry points.
+        </p>
+
+        <!-- Complete Dataset Link Callout -->
+        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--dark-border); box-shadow: var(--shadow-md);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                <span class="method-badge method-get">GET</span>
+                <span style="font-weight: 800; font-size: 1.1rem; color: #38bdf8;">Load All Photos on Server (Full Dataset Endpoint)</span>
+              </div>
+              <p style="color: #cbd5e1; font-size: 0.9rem; max-width: 800px; margin-top: 0.35rem;">
+                By using an astronomical search radius (<code>1000000000000</code> km) from London coordinates (<code>51.514756</code>, <code>-0.104345</code>), the Great-Circle distance formula covers the entire planet and returns all <b>37,517 photos</b> on the server in a single JSON array:
+              </p>
+            </div>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem; color: #7dd3fc; word-break: break-all; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+            <span>https://casa0017.cetools.org/data/51.514756/-0.104345/1000000000000</span>
+            <button type="button" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); color: #fff; border: none; white-space: nowrap;" onclick="navigator.clipboard.writeText('https://casa0017.cetools.org/data/51.514756/-0.104345/1000000000000').then(() => alert('Full dataset URL copied!'))">📋 Copy URL</button>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+            <a href="https://casa0017.cetools.org/data/51.514756/-0.104345/1000000000000" target="_blank" class="btn btn-primary btn-sm">
+              🌐 Open on Live Server (casa0017.cetools.org) ↗
+            </a>
+            <a href="/data/51.514756/-0.104345/1000000000000" target="_blank" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2);">
+              🖥️ Open on This Local Server Instance ↗
+            </a>
+            <button type="button" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2);" onclick="setEndpoint1(51.514756, -0.104345, 1000000000000); document.getElementById('endpoints').scrollIntoView({behavior: 'smooth'});">
+              ⚡ Load in Interactive Sandbox Below
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Stat Metric Cards Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Geotagged Records</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: var(--primary); margin: 0.25rem 0;">37,517</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Photos with valid WGS84 coordinates &amp; MySQL <code>POINT</code> objects</div>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Temporal Window</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: var(--accent); margin: 0.25rem 0;">63 Days</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">1 Jan 2010 – 3 Mar 2010 (UK Winter Jan/Feb 2010 upload window)</div>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Geographic Bounding Box</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: var(--success); margin: 0.25rem 0;">UK Nationwide</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">49.89°N – 60.43°N • -9.18°W – 2.68°E (Cornwall to Shetland)</div>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Top Camera Model</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: var(--warning); margin: 0.25rem 0; line-height: 1.2;">Fujifilm S1500</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">2,061 photos (followed by Canon 400D &amp; Nikon D90)</div>
+          </div>
+        </div>
+
+        <!-- Two Column Deep Dive: Top Cameras & Schema -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+          <!-- Camera Analytics Summary -->
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">📷 Top Camera Hardware Breakdown</h4>
+              <a href="/examples/cameras" style="font-size: 0.8rem; color: var(--primary); font-weight: 600; text-decoration: none;">Explore 30+ Cameras →</a>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              From <code>GET /data/topCamera</code>, aggregating EXIF metadata across the entire dataset:
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                <span>1. <b>FUJIFILM FinePix S1500</b></span>
+                <span class="badge" style="background: var(--primary-light); color: var(--primary); font-weight: 700; padding: 1px 8px; border-radius: 999px;">2,061 photos (5.5%)</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                <span>2. <b>Canon EOS 400D DIGITAL</b></span>
+                <span class="badge" style="background: var(--primary-light); color: var(--primary); font-weight: 700; padding: 1px 8px; border-radius: 999px;">1,543 photos (4.1%)</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                <span>3. <b>NIKON D90</b></span>
+                <span class="badge" style="background: var(--primary-light); color: var(--primary); font-weight: 700; padding: 1px 8px; border-radius: 999px;">1,537 photos (4.1%)</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                <span>4. <b>Canon EOS 450D</b></span>
+                <span class="badge" style="background: var(--primary-light); color: var(--primary); font-weight: 700; padding: 1px 8px; border-radius: 999px;">1,167 photos (3.1%)</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                <span>5. <b>Apple iPhone</b></span>
+                <span class="badge" style="background: var(--primary-light); color: var(--primary); font-weight: 700; padding: 1px 8px; border-radius: 999px;">1,103 photos (2.9%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Relational Database Schemas -->
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem;">🗄️ Database Tables &amp; Relational Schema</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.85rem;">
+              <div style="background: #ffffff; padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="font-weight: 700; color: var(--primary);">📍 photo_locations <span style="font-weight: 400; color: var(--text-muted); font-size: 0.75rem;">(37,517 rows)</span></div>
+                <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #475569; margin-top: 2px;">pid (bigint), lat, lon, coords (point), points (point)</div>
+              </div>
+
+              <div style="background: #ffffff; padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="font-weight: 700; color: var(--accent);">📝 metadata <span style="font-weight: 400; color: var(--text-muted); font-size: 0.75rem;">(37,517 rows)</span></div>
+                <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #475569; margin-top: 2px;">pid (bigint), description (title), device (camera), tags</div>
+              </div>
+
+              <div style="background: #ffffff; padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="font-weight: 700; color: var(--success);">🖼️ photos <span style="font-weight: 400; color: var(--text-muted); font-size: 0.75rem;">(37,517 rows)</span></div>
+                <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #475569; margin-top: 2px;">pid (bigint), date_uploaded (epoch), download_url (static URL)</div>
+              </div>
+
+              <div style="background: #ffffff; padding: 0.6rem 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="font-weight: 700; color: #0284c7;">🏛️ cities <span style="font-weight: 400; color: var(--text-muted); font-size: 0.75rem;">(UK reference cities)</span></div>
+                <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #475569; margin-top: 2px;">name, lat, lon, population, elevation, country_cd</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Demonstration Pages Section -->
+    <div id="demos" class="section-header">
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+        <span class="hero-tag" style="background: var(--success-light); color: #15803d; font-weight: 700;">LIVE DEMONSTRATIONS</span>
+      </div>
+      <h2 class="section-title">🚀 Interactive Demonstration Pages</h2>
+      <p class="section-desc">See how each endpoint is used in practical frontend web applications with live Leaflet maps and camera analytics.</p>
+    </div>
+
+    <!-- 3 Demonstration Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+      <div class="card" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="card-body" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">🗺️ Live Map Visualizer</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+              Full-screen Leaflet web map executing spatial Great-Circle queries on <code>/data/:lat/:lon/:radius</code> and asynchronous photo popups.
+            </p>
+          </div>
+          <a href="/examples/map" class="btn btn-primary btn-sm" style="width: 100%;">Open Live Map →</a>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="card-body" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">📷 Top Cameras Explorer</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+              Visual device breakdown of top 30 cameras from <code>/data/topCamera</code> with live model search and photo filters.
+            </p>
+          </div>
+          <a href="/examples/cameras" class="btn btn-secondary btn-sm" style="width: 100%;">Open Camera Explorer →</a>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="card-body" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">🔍 Photo Inspector</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+              Deep metadata and EXIF inspector for <code>/data/photoDescription/:pid</code> displaying titles, tags, and JSON.
+            </p>
+          </div>
+          <a href="/examples/photo/4279893539" class="btn btn-secondary btn-sm" style="width: 100%;">Inspect Photo Details →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Endpoints Section -->
+    <div id="endpoints" class="section-header">
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+        <span class="hero-tag" style="background: var(--primary-light); color: var(--primary); font-weight: 700;">REST API REFERENCE</span>
+      </div>
+      <h2 class="section-title">📖 API Endpoints &amp; Interactive Explorer</h2>
+      <p class="section-desc">Test each endpoint directly in your browser, inspect responses, and copy ready-to-use client code.</p>
+    </div>
+
+    <!-- Endpoint 1: Spatial Radius -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/data/<span class="endpoint-param">:lat</span>/<span class="endpoint-param">:lon</span>/<span class="endpoint-param">:radius</span></span>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <a href="/examples/map" class="btn btn-outline-primary btn-sm">🗺️ Open in Map Visualizer</a>
+          <a href="/data/51.514756/-0.104345/10" target="_blank" class="btn btn-secondary btn-sm">Raw JSON ↗</a>
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">
+          <b>Description:</b> Searches the <code>photo_locations</code> spatial table and returns all photos situated within the given radius (in kilometers) around the target WGS84 coordinate point.
+        </p>
+
+        <!-- Parameters Table -->
+        <div class="params-table-wrapper">
+          <table class="params-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Requirement</th>
+                <th>Example</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="param-name">lat</span></td>
+                <td><span class="param-type">float</span></td>
+                <td><span class="param-badge-req">Required</span></td>
+                <td><code>51.514756</code></td>
+                <td>WGS84 Latitude of search center (-90 to +90).</td>
+              </tr>
+              <tr>
+                <td><span class="param-name">lon</span></td>
+                <td><span class="param-type">float</span></td>
+                <td><span class="param-badge-req">Required</span></td>
+                <td><code>-0.104345</code></td>
+                <td>WGS84 Longitude of search center (-180 to +180).</td>
+              </tr>
+              <tr>
+                <td><span class="param-name">radius</span></td>
+                <td><span class="param-type">float</span></td>
+                <td><span class="param-badge-req">Required</span></td>
+                <td><code>10</code></td>
+                <td>Search radius in <b>kilometers</b> (or e.g. <code>1000000000000</code> to load all photos).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Interactive Sandbox -->
+        <div class="playground-box">
+          <div class="playground-header">
+            <div class="playground-title">⚡ Interactive Try-It Console</div>
+            <div class="quick-pills" style="margin-bottom: 0;">
+              <span class="pill-label">Presets:</span>
+              <button type="button" class="quick-pill" onclick="setEndpoint1(51.5074, -0.1278, 10)">London (10km)</button>
+              <button type="button" class="quick-pill" onclick="setEndpoint1(53.4808, -2.2426, 15)">Manchester (15km)</button>
+              <button type="button" class="quick-pill" onclick="setEndpoint1(55.9533, -3.1883, 15)">Edinburgh (15km)</button>
+              <button type="button" class="quick-pill" onclick="setEndpoint1(51.514756, -0.104345, 1000000000000)" style="background: var(--primary-light); color: var(--primary); font-weight: 700;">🌐 All Photos (37,517)</button>
+            </div>
+          </div>
+
+          <div class="inputs-grid">
+            <div class="form-group">
+              <label class="form-label" for="ep1-lat">Latitude</label>
+              <input type="number" step="any" id="ep1-lat" class="form-input" value="51.5074">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ep1-lon">Longitude</label>
+              <input type="number" step="any" id="ep1-lon" class="form-input" value="-0.1278">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ep1-radius">Radius (km)</label>
+              <input type="number" step="any" id="ep1-radius" class="form-input" value="10">
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-primary" onclick="runEndpoint1()"><span>Send Request</span></button>
+
+          <!-- Response Container -->
+          <div id="ep1-response" class="response-container">
+            <div class="response-header">
+              <div class="response-status">
+                <span id="ep1-status-badge" class="status-badge status-200">200 OK</span>
+                <span id="ep1-meta" class="response-meta"></span>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="copySnippet('ep1-json')">📋 Copy JSON</button>
+            </div>
+            <div class="response-tabs">
+              <button class="tab-btn active" onclick="switchTab(this, 'ep1-tab-preview')">Visual Preview</button>
+              <button class="tab-btn" onclick="switchTab(this, 'ep1-tab-json')">Raw JSON</button>
+              <button class="tab-btn" onclick="switchTab(this, 'ep1-tab-code')">JavaScript Code</button>
+            </div>
+            <div id="ep1-tab-preview" class="tab-panel active">
+              <div id="ep1-preview-content"></div>
+            </div>
+            <div id="ep1-tab-json" class="tab-panel">
+              <pre id="ep1-json" class="json-pre"></pre>
+            </div>
+            <div id="ep1-tab-code" class="tab-panel">
+              <pre id="ep1-code" class="code-block"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Endpoint 2: Photo Metadata -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/data/photoDescription/<span class="endpoint-param">:pid</span></span>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <a href="/examples/photo/4279893539" class="btn btn-outline-primary btn-sm">🔍 Open in Photo Inspector</a>
+          <a href="/data/photoDescription/4279893539" target="_blank" class="btn btn-secondary btn-sm">Raw JSON ↗</a>
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">
+          <b>Description:</b> Joins the <code>metadata</code> and <code>photos</code> tables on <code>pid</code> to return description, EXIF camera device, tags, upload timestamp, and static Flickr download URL for a specific photo.
+        </p>
+
+        <!-- Parameters Table -->
+        <div class="params-table-wrapper">
+          <table class="params-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Requirement</th>
+                <th>Example</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="param-name">pid</span></td>
+                <td><span class="param-type">integer</span></td>
+                <td><span class="param-badge-req">Required</span></td>
+                <td><code>4279893539</code></td>
+                <td>Unique Flickr Photo Identifier.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Interactive Sandbox -->
+        <div class="playground-box">
+          <div class="playground-header">
+            <div class="playground-title">⚡ Interactive Try-It Console</div>
+            <div class="quick-pills" style="margin-bottom: 0;">
+              <span class="pill-label">Sample Photos:</span>
+              <button type="button" class="quick-pill" onclick="setEndpoint2(4279893539)">4279893539</button>
+              <button type="button" class="quick-pill" onclick="setEndpoint2(4338957434)">4338957434</button>
+              <button type="button" class="quick-pill" onclick="setEndpoint2(4256957563)">4256957563</button>
+              <button type="button" class="quick-pill" onclick="setEndpoint2(4322798589)">4322798589</button>
+            </div>
+          </div>
+
+          <div class="inputs-grid" style="grid-template-columns: 1fr;">
+            <div class="form-group">
+              <label class="form-label" for="ep2-pid">Photo ID (pid)</label>
+              <input type="number" id="ep2-pid" class="form-input" value="4279893539">
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-primary" onclick="runEndpoint2()"><span>Send Request</span></button>
+
+          <!-- Response Container -->
+          <div id="ep2-response" class="response-container">
+            <div class="response-header">
+              <div class="response-status">
+                <span id="ep2-status-badge" class="status-badge status-200">200 OK</span>
+                <span id="ep2-meta" class="response-meta"></span>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="copySnippet('ep2-json')">📋 Copy JSON</button>
+            </div>
+            <div class="response-tabs">
+              <button class="tab-btn active" onclick="switchTab(this, 'ep2-tab-preview')">Visual Preview</button>
+              <button class="tab-btn" onclick="switchTab(this, 'ep2-tab-json')">Raw JSON</button>
+              <button class="tab-btn" onclick="switchTab(this, 'ep2-tab-code')">JavaScript Code</button>
+            </div>
+            <div id="ep2-tab-preview" class="tab-panel active">
+              <div id="ep2-preview-content"></div>
+            </div>
+            <div id="ep2-tab-json" class="tab-panel">
+              <pre id="ep2-json" class="json-pre"></pre>
+            </div>
+            <div id="ep2-tab-code" class="tab-panel">
+              <pre id="ep2-code" class="code-block"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Endpoint 3: Top Camera Devices -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/data/topCamera</span>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <a href="/examples/cameras" class="btn btn-outline-primary btn-sm">📷 Open in Camera Explorer</a>
+          <a href="/data/topCamera" target="_blank" class="btn btn-secondary btn-sm">Raw JSON ↗</a>
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">
+          <b>Description:</b> Aggregates and groups photo metadata by camera device model, returning the top 30 most popular camera devices ordered by photo count in descending order.
+        </p>
+
+        <!-- Interactive Sandbox -->
+        <div class="playground-box">
+          <div class="playground-header">
+            <div class="playground-title">⚡ Interactive Try-It Console</div>
+          </div>
+
+          <button type="button" class="btn btn-primary" onclick="runEndpoint3()"><span>Fetch Top 30 Cameras</span></button>
+
+          <!-- Response Container -->
+          <div id="ep3-response" class="response-container">
+            <div class="response-header">
+              <div class="response-status">
+                <span id="ep3-status-badge" class="status-badge status-200">200 OK</span>
+                <span id="ep3-meta" class="response-meta"></span>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="copySnippet('ep3-json')">📋 Copy JSON</button>
+            </div>
+            <div class="response-tabs">
+              <button class="tab-btn active" onclick="switchTab(this, 'ep3-tab-preview')">Visual Ranking</button>
+              <button class="tab-btn" onclick="switchTab(this, 'ep3-tab-json')">Raw JSON</button>
+              <button class="tab-btn" onclick="switchTab(this, 'ep3-tab-code')">JavaScript Code</button>
+            </div>
+            <div id="ep3-tab-preview" class="tab-panel active">
+              <div id="ep3-preview-content"></div>
+            </div>
+            <div id="ep3-tab-json" class="tab-panel">
+              <pre id="ep3-json" class="json-pre"></pre>
+            </div>
+            <div id="ep3-tab-code" class="tab-panel">
+              <pre id="ep3-code" class="code-block"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Endpoint 4: Filter by Camera -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/data/cameraType/<span class="endpoint-param">:camera</span></span>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <a href="/data/cameraType/Canon" target="_blank" class="btn btn-secondary btn-sm">Raw JSON ↗</a>
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">
+          <b>Description:</b> Joins <code>metadata</code> with <code>photo_locations</code> and returns photos taken with camera models matching the keyword (case-insensitive SQL <code>LIKE %camera%</code>).
+        </p>
+
+        <!-- Parameters Table -->
+        <div class="params-table-wrapper">
+          <table class="params-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Requirement</th>
+                <th>Example</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="param-name">camera</span></td>
+                <td><span class="param-type">string</span></td>
+                <td><span class="param-badge-req">Required</span></td>
+                <td><code>Canon</code>, <code>Nikon</code>, <code>Apple</code></td>
+                <td>Camera manufacturer or model keyword.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Interactive Sandbox -->
+        <div class="playground-box">
+          <div class="playground-header">
+            <div class="playground-title">⚡ Interactive Try-It Console</div>
+            <div class="quick-pills" style="margin-bottom: 0;">
+              <span class="pill-label">Quick Filters:</span>
+              <button type="button" class="quick-pill" onclick="setEndpoint4('Canon')">Canon</button>
+              <button type="button" class="quick-pill" onclick="setEndpoint4('Nikon')">Nikon</button>
+              <button type="button" class="quick-pill" onclick="setEndpoint4('Apple')">Apple</button>
+              <button type="button" class="quick-pill" onclick="setEndpoint4('Sony')">Sony</button>
+              <button type="button" class="quick-pill" onclick="setEndpoint4('Panasonic')">Panasonic</button>
+            </div>
+          </div>
+
+          <div class="inputs-grid" style="grid-template-columns: 1fr;">
+            <div class="form-group">
+              <label class="form-label" for="ep4-camera">Camera Device Query</label>
+              <input type="text" id="ep4-camera" class="form-input" value="Canon">
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-primary" onclick="runEndpoint4()"><span>Search Photos</span></button>
+
+          <!-- Response Container -->
+          <div id="ep4-response" class="response-container">
+            <div class="response-header">
+              <div class="response-status">
+                <span id="ep4-status-badge" class="status-badge status-200">200 OK</span>
+                <span id="ep4-meta" class="response-meta"></span>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="copySnippet('ep4-json')">📋 Copy JSON</button>
+            </div>
+            <div class="response-tabs">
+              <button class="tab-btn active" onclick="switchTab(this, 'ep4-tab-preview')">Visual Preview</button>
+              <button class="tab-btn" onclick="switchTab(this, 'ep4-tab-json')">Raw JSON</button>
+              <button class="tab-btn" onclick="switchTab(this, 'ep4-tab-code')">JavaScript Code</button>
+            </div>
+            <div id="ep4-tab-preview" class="tab-panel active">
+              <div id="ep4-preview-content"></div>
+            </div>
+            <div id="ep4-tab-json" class="tab-panel">
+              <pre id="ep4-json" class="json-pre"></pre>
+            </div>
+            <div id="ep4-tab-code" class="tab-panel">
+              <pre id="ep4-code" class="code-block"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download Datasets Section -->
+    <section id="downloads" class="card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="card-title">💾 Raw Datasets &amp; SQL Dumps</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+          Download the underlying database files and CSV exports for offline exploration, GIS analysis in QGIS, or importing into your own local MySQL database:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+          <!-- File 1 -->
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-size: 1.25rem; margin-bottom: 0.25rem;">📍 Photo Locations CSV</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;"> • ~2.9 MB</div>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">Contains 37,500+ photo IDs and coordinates (lat, lon, and WKT POINT format).</p>
+            </div>
+            <a href="/download/flickr_2010_uk_JanFeb_photo_locations.csv" download class="btn btn-secondary btn-sm" style="margin-top: 1rem; width: 100%;">⬇️ Download CSV</a>
+          </div>
+
+          <!-- File 2 -->
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-size: 1.25rem; margin-bottom: 0.25rem;">📝 Photos Metadata CSV</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">• ~3.1 MB</div>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">Contains photo IDs, upload timestamps, and direct static Flickr image URLs.</p>
+            </div>
+            <a href="/download/flickr_2010_uk_JanFeb_photos.csv" download class="btn btn-secondary btn-sm" style="margin-top: 1rem; width: 100%;">⬇️ Download CSV</a>
+          </div>
+
+          <!-- File 3 -->
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-size: 1.25rem; margin-bottom: 0.25rem;">🏛️ Cities SQL Dump</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;"><code>cities.sql</code> • ~2.3 MB</div>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">SQL table dump containing UK city center coordinates, populations, and names.</p>
+            </div>
+            <a href="/download/cities.sql" download class="btn btn-secondary btn-sm" style="margin-top: 1rem; width: 100%;">⬇️ Download SQL</a>
+          </div>
+
+          <!-- File 4 -->
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-size: 1.25rem; margin-bottom: 0.25rem;">📦 Complete Data Archive</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;"><code>data.zip</code> • ~1.3 MB</div>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">Compressed ZIP bundle containing all raw CSV datasets and SQL schemas.</p>
+            </div>
+            <a href="/download/data.zip" download class="btn btn-primary btn-sm" style="margin-top: 1rem; width: 100%;">⬇️ Download All (.zip)</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div>
+        <strong>UCL Centre for Advanced Spatial Analysis (CASA)</strong><br>
+        CASA0017: Web Architecture &amp; Connected Environments
+      </div>
+      <div>
+        Built with Express, MySQL2 Connection Pool &amp; Leaflet
+      </div>
+    </div>
+  </footer>
+
+  <!-- Interactive JavaScript for Try-It Console -->
+  <script>
+    function switchTab(btn, panelId) {
+      const container = btn.closest('.response-container');
+      container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      container.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(panelId).classList.add('active');
+    }
+
+    function copySnippet(elementId) {
+      const text = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied to clipboard!');
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Endpoint 1: Spatial
+    function setEndpoint1(lat, lon, r) {
+      document.getElementById('ep1-lat').value = lat;
+      document.getElementById('ep1-lon').value = lon;
+      document.getElementById('ep1-radius').value = r;
+      runEndpoint1();
+    }
+
+    async function runEndpoint1() {
+      const lat = document.getElementById('ep1-lat').value;
+      const lon = document.getElementById('ep1-lon').value;
+      const r = document.getElementById('ep1-radius').value;
+      const resContainer = document.getElementById('ep1-response');
+      const preview = document.getElementById('ep1-preview-content');
+      const jsonPre = document.getElementById('ep1-json');
+      const codePre = document.getElementById('ep1-code');
+      const meta = document.getElementById('ep1-meta');
+      const badge = document.getElementById('ep1-status-badge');
+
+      resContainer.style.display = 'block';
+      preview.innerHTML = '<div style="color: var(--text-muted);">Querying database...</div>';
+      jsonPre.innerText = 'Loading...';
+
+      const url = `/data/${lat}/${lon}/${r}`;
+      codePre.innerText = `// Fetch photo locations within ${r}km\nfetch('${url}')\n  .then(res => res.json())\n  .then(photos => {\n    console.log('Found photos:', photos.length);\n    photos.forEach(p => {\n      L.marker([p.lat, p.lon]).addTo(map);\n    });\n  });`;
+
+      const start = performance.now();
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const duration = (performance.now() - start).toFixed(0);
+
+        badge.className = `status-badge ${res.ok ? 'status-200' : 'status-400'}`;
+        badge.innerText = `${res.status} ${res.statusText}`;
+        meta.innerText = `${data.length ? data.length.toLocaleString() + ' records' : '0 records'} • ${duration}ms`;
+
+        jsonPre.innerText = JSON.stringify(data.slice(0, 50), null, 2) + (data.length > 50 ? `\n\n// ... (${data.length - 50} more items)` : '');
+
+        if (data.length === 0) {
+          preview.innerHTML = '<div style="color: var(--text-muted);">No photos found in this radius.</div>';
+        } else {
+          preview.innerHTML = `
+            <div style="font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--text-muted);">
+              Found <b>${data.length.toLocaleString()}</b> photos within ${r} km. Showing first 10:
+            </div>
+            <div class="params-table-wrapper" style="margin: 0;">
+              <table class="params-table">
+                <thead>
+                  <tr>
+                    <th>Photo ID</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.slice(0, 10).map(p => `
+                    <tr>
+                      <td><code>${p.pid}</code></td>
+                      <td>${p.lat}</td>
+                      <td>${p.lon}</td>
+                      <td><a href="/examples/photo/${p.pid}" target="_blank" class="btn btn-secondary btn-sm">Inspect Details →</a></td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+      } catch (err) {
+        badge.className = 'status-badge status-500';
+        badge.innerText = 'Error';
+        jsonPre.innerText = `{\n  "error": "${err.message}"\n}`;
+        preview.innerHTML = `<div style="color: var(--danger);">Failed: ${err.message}</div>`;
+      }
+    }
+
+    // Endpoint 2: Photo Metadata
+    function setEndpoint2(pid) {
+      document.getElementById('ep2-pid').value = pid;
+      runEndpoint2();
+    }
+
+    async function runEndpoint2() {
+      const pid = document.getElementById('ep2-pid').value;
+      const resContainer = document.getElementById('ep2-response');
+      const preview = document.getElementById('ep2-preview-content');
+      const jsonPre = document.getElementById('ep2-json');
+      const codePre = document.getElementById('ep2-code');
+      const meta = document.getElementById('ep2-meta');
+      const badge = document.getElementById('ep2-status-badge');
+
+      resContainer.style.display = 'block';
+      preview.innerHTML = '<div style="color: var(--text-muted);">Querying photo metadata...</div>';
+      jsonPre.innerText = 'Loading...';
+
+      const url = `/data/photoDescription/${pid}`;
+      codePre.innerText = `// Fetch photo metadata\nfetch('${url}')\n  .then(res => res.json())\n  .then(data => {\n    if (data.length > 0) {\n      const photo = data[0];\n      console.log('Title:', photo.description);\n      console.log('Camera:', photo.device);\n    }\n  });`;
+
+      const start = performance.now();
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const duration = (performance.now() - start).toFixed(0);
+
+        badge.className = `status-badge ${res.ok ? 'status-200' : 'status-400'}`;
+        badge.innerText = `${res.status} ${res.statusText}`;
+        meta.innerText = `${duration}ms`;
+
+        jsonPre.innerText = JSON.stringify(data, null, 2);
+
+        if (!data || data.length === 0) {
+          preview.innerHTML = '<div style="color: var(--text-muted);">No photo record found for this Photo ID.</div>';
+        } else {
+          const photo = data[0];
+          let decodedTitle = photo.description ? decodeURIComponent(photo.description.replace(/\+/g, ' ')) : 'Untitled';
+          let tagsList = photo.tags ? photo.tags.split(',').map(t => `<span class="tag-chip">${escapeHtml(t.trim())}</span>`).join('') : 'None';
+          preview.innerHTML = `
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">PHOTO ID: ${photo.pid}</div>
+              <div style="font-size: 1.15rem; font-weight: 800; margin: 0.25rem 0 0.5rem 0;">${escapeHtml(decodedTitle)}</div>
+              <div style="margin-bottom: 0.5rem;"><span class="record-badge">📷 ${escapeHtml(photo.device || 'Unknown Camera')}</span></div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;"><b>Tags:</b></div>
+              <div class="record-tags">${tagsList}</div>
+              <div style="margin-top: 1rem;">
+                <a href="/examples/photo/${photo.pid}" class="btn btn-secondary btn-sm">Open Full Photo Inspector →</a>
+              </div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        badge.className = 'status-badge status-500';
+        badge.innerText = 'Error';
+        jsonPre.innerText = `{\n  "error": "${err.message}"\n}`;
+        preview.innerHTML = `<div style="color: var(--danger);">Failed: ${err.message}</div>`;
+      }
+    }
+
+    // Endpoint 3: Top Camera
+    async function runEndpoint3() {
+      const resContainer = document.getElementById('ep3-response');
+      const preview = document.getElementById('ep3-preview-content');
+      const jsonPre = document.getElementById('ep3-json');
+      const codePre = document.getElementById('ep3-code');
+      const meta = document.getElementById('ep3-meta');
+      const badge = document.getElementById('ep3-status-badge');
+
+      resContainer.style.display = 'block';
+      preview.innerHTML = '<div style="color: var(--text-muted);">Querying top cameras...</div>';
+      jsonPre.innerText = 'Loading...';
+
+      const url = '/data/topCamera';
+      codePre.innerText = `// Fetch top 30 camera devices\nfetch('${url}')\n  .then(res => res.json())\n  .then(cameras => {\n    cameras.forEach(c => {\n      console.log(c.device + ': ' + c.count);\n    });\n  });`;
+
+      const start = performance.now();
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const duration = (performance.now() - start).toFixed(0);
+
+        badge.className = `status-badge ${res.ok ? 'status-200' : 'status-400'}`;
+        badge.innerText = `${res.status} ${res.statusText}`;
+        meta.innerText = `${data.length} cameras • ${duration}ms`;
+
+        jsonPre.innerText = JSON.stringify(data, null, 2);
+
+        const maxCount = data.length > 0 ? data[0].count : 1;
+        preview.innerHTML = `
+          <div class="camera-rank-list">
+            ${data.slice(0, 10).map((c, i) => `
+              <div class="camera-rank-item" onclick="setEndpoint4('${escapeHtml(c.device)}')">
+                <div class="rank-number">#${i + 1}</div>
+                <div class="rank-details">
+                  <div class="rank-device">${escapeHtml(c.device)}</div>
+                  <div class="rank-bar-bg">
+                    <div class="rank-bar-fill" style="width: ${Math.round((c.count / maxCount) * 100)}%;"></div>
+                  </div>
+                </div>
+                <div class="rank-count-badge">${Number(c.count).toLocaleString()}</div>
+              </div>
+            `).join('')}
+          </div>
+          <div style="margin-top: 1rem; text-align: center;">
+            <a href="/examples/cameras" class="btn btn-secondary btn-sm">Explore All in Camera Explorer →</a>
+          </div>
+        `;
+      } catch (err) {
+        badge.className = 'status-badge status-500';
+        badge.innerText = 'Error';
+        jsonPre.innerText = `{\n  "error": "${err.message}"\n}`;
+        preview.innerHTML = `<div style="color: var(--danger);">Failed: ${err.message}</div>`;
+      }
+    }
+
+    // Endpoint 4: Filter by Camera
+    function setEndpoint4(cam) {
+      document.getElementById('ep4-camera').value = cam;
+      runEndpoint4();
+    }
+
+    async function runEndpoint4() {
+      const cam = document.getElementById('ep4-camera').value;
+      const resContainer = document.getElementById('ep4-response');
+      const preview = document.getElementById('ep4-preview-content');
+      const jsonPre = document.getElementById('ep4-json');
+      const codePre = document.getElementById('ep4-code');
+      const meta = document.getElementById('ep4-meta');
+      const badge = document.getElementById('ep4-status-badge');
+
+      resContainer.style.display = 'block';
+      preview.innerHTML = '<div style="color: var(--text-muted);">Querying photos by camera...</div>';
+      jsonPre.innerText = 'Loading...';
+
+      const url = `/data/cameraType/${encodeURIComponent(cam)}`;
+      codePre.innerText = `// Search photos by camera\nfetch('${url}')\n  .then(res => res.json())\n  .then(photos => {\n    console.log('Photos taken with ${cam}:', photos.length);\n  });`;
+
+      const start = performance.now();
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const duration = (performance.now() - start).toFixed(0);
+
+        badge.className = `status-badge ${res.ok ? 'status-200' : 'status-400'}`;
+        badge.innerText = `${res.status} ${res.statusText}`;
+        meta.innerText = `${data.length ? data.length.toLocaleString() + ' photos' : '0 photos'} • ${duration}ms`;
+
+        jsonPre.innerText = JSON.stringify(data.slice(0, 30), null, 2) + (data.length > 30 ? `\n\n// ... (${data.length - 30} more items)` : '');
+
+        if (data.length === 0) {
+          preview.innerHTML = '<div style="color: var(--text-muted);">No photos found for this camera model.</div>';
+        } else {
+          preview.innerHTML = `
+            <div style="font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--text-muted);">
+              Found <b>${data.length.toLocaleString()}</b> photos taken with <b>${escapeHtml(cam)}</b>. Showing first 10:
+            </div>
+            <div class="params-table-wrapper" style="margin: 0;">
+              <table class="params-table">
+                <thead>
+                  <tr>
+                    <th>Photo ID</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.slice(0, 10).map(p => `
+                    <tr>
+                      <td><code>${p.pid}</code></td>
+                      <td>${p.lat}</td>
+                      <td>${p.lon}</td>
+                      <td><a href="/examples/photo/${p.pid}" target="_blank" class="btn btn-secondary btn-sm">Inspect Details →</a></td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+      } catch (err) {
+        badge.className = 'status-badge status-500';
+        badge.innerText = 'Error';
+        jsonPre.innerText = `{\n  "error": "${err.message}"\n}`;
+        preview.innerHTML = `<div style="color: var(--danger);">Failed: ${err.message}</div>`;
+      }
+    }
+  </script>
 </body>
 </html>

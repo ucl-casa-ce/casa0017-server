@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Metadata Inspector • CASA0017 Flickr API</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/modal.js"></script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span>📸 Flickr DB API</span>
+        <span class="brand-badge">CASA0017</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">📖 Documentation</a></li>
+        <li><a href="/examples/map" class="nav-link">🗺️ Live Map</a></li>
+        <li><a href="/examples/cameras" class="nav-link">📷 Top Cameras</a></li>
+        <li><a href="/examples/photo/4279893539" class="nav-link active">🔍 Photo Inspector</a></li>
+        <li><a href="/#downloads" class="nav-link">💾 Datasets</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="main-wrapper">
+    <!-- Header -->
+    <div class="section-header">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 class="section-title">🔍 Photo Metadata Inspector</h1>
+          <p class="section-desc">Interactive explorer for <code>GET /data/photoDescription/:pid</code> joining <code>metadata</code> and <code>photos</code> tables.</p>
+        </div>
+        <a href="/" class="btn btn-secondary btn-sm">← Back to API Docs</a>
+      </div>
+    </div>
+
+    <!-- Search / Input Card -->
+    <div class="card">
+      <div class="card-body">
+        <form onsubmit="event.preventDefault(); loadPhoto(document.getElementById('input-pid').value);" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <input type="number" id="input-pid" class="form-input" value="<%= pid %>" placeholder="Enter Photo ID (e.g. 4279893539)" style="flex: 1; min-width: 200px;">
+            <button type="submit" class="btn btn-primary"><span>🔍 Inspect Photo</span></button>
+          </div>
+
+          <div class="quick-pills" style="margin-bottom: 0;">
+            <span class="pill-label">Sample Photos:</span>
+            <button type="button" class="quick-pill" onclick="setAndLoadPid(4279893539)">4279893539 (Canon 40D)</button>
+            <button type="button" class="quick-pill" onclick="setAndLoadPid(4338957434)">4338957434 (Panasonic)</button>
+            <button type="button" class="quick-pill" onclick="setAndLoadPid(4256957563)">4256957563 (Canon 450D)</button>
+            <button type="button" class="quick-pill" onclick="setAndLoadPid(4322798589)">4322798589 (Nikon D90)</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Content Layout: Visual Card on Left, JSON on Right -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
+      <!-- Visual Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Formatted Visual Record</span>
+          <span id="photo-status-badge" class="badge" style="background: var(--success-light); color: var(--success); font-size: 0.8rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Ready</span>
+        </div>
+        <div class="card-body" id="photo-card-body">
+          <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading photo details...</div>
+        </div>
+      </div>
+
+      <!-- JSON & Code Panel -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Raw API Output & Code</span>
+          <button class="btn btn-secondary btn-sm" onclick="copyJson()">📋 Copy JSON</button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="response-tabs">
+            <button class="tab-btn active" onclick="switchTab(this, 'tab-json')">Raw JSON</button>
+            <button class="tab-btn" onclick="switchTab(this, 'tab-fetch')">JavaScript (fetch)</button>
+            <button class="tab-btn" onclick="switchTab(this, 'tab-jquery')">jQuery</button>
+          </div>
+
+          <div id="tab-json" class="tab-panel active">
+            <pre class="json-pre" id="json-viewer" style="max-height: 450px;">Loading...</pre>
+          </div>
+
+          <div id="tab-fetch" class="tab-panel">
+            <pre class="code-block" id="fetch-snippet">// JavaScript fetch example
+fetch('/data/photoDescription/' + pid)
+  .then(response => response.json())
+  .then(data => {
+    if (data.length > 0) {
+      console.log('Photo metadata:', data[0]);
+    }
+  });</pre>
+          </div>
+
+          <div id="tab-jquery" class="tab-panel">
+            <pre class="code-block">// jQuery getJSON example
+$.getJSON('/data/photoDescription/' + pid, function(data) {
+  if (data.length > 0) {
+    var photo = data[0];
+    $('#title').text(photo.description);
+    $('#camera').text(photo.device);
+  }
+});</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div>UCL Centre for Advanced Spatial Analysis (CASA) • CASA0017 Web Architecture</div>
+      <div>Flickr Geotagged Database API Explorer</div>
+    </div>
+  </footer>
+
+  <script>
+    let currentData = null;
+
+    function setAndLoadPid(pid) {
+      document.getElementById('input-pid').value = pid;
+      loadPhoto(pid);
+    }
+
+    async function loadPhoto(pid) {
+      if (!pid) return;
+
+      const cardBody = document.getElementById('photo-card-body');
+      const jsonViewer = document.getElementById('json-viewer');
+      const statusBadge = document.getElementById('photo-status-badge');
+
+      cardBody.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading photo details from database...</div>';
+      jsonViewer.innerText = 'Loading...';
+      statusBadge.innerText = 'Fetching...';
+
+      try {
+        const response = await fetch(`/data/photoDescription/${pid}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Photo not found or invalid ID`);
+        }
+        currentData = await response.json();
+
+        jsonViewer.innerText = JSON.stringify(currentData, null, 2);
+
+        if (!currentData || currentData.length === 0) {
+          statusBadge.innerText = 'No Data';
+          statusBadge.style.background = 'var(--warning-light)';
+          statusBadge.style.color = 'var(--warning)';
+          cardBody.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">No metadata record found for this Photo ID.</div>';
+          return;
+        }
+
+        statusBadge.innerText = '200 OK';
+        statusBadge.style.background = 'var(--success-light)';
+        statusBadge.style.color = 'var(--success)';
+
+        const photo = currentData[0];
+        let decodedTitle = photo.description ? decodeURIComponent(photo.description.replace(/\+/g, ' ')) : 'Untitled Photo';
+        let tagsList = photo.tags ? photo.tags.split(',').map(t => `<span class="tag-chip">${escapeHtml(t.trim())}</span>`).join('') : '<span style="color: var(--text-muted); font-size: 0.8rem;">None</span>';
+        let uploadDate = photo.date_uploaded ? new Date(photo.date_uploaded * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Unknown';
+
+        cardBody.innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            ${photo.download_url ? `
+              <div style="background: #0f172a; border-radius: var(--radius-md); overflow: hidden; text-align: center;">
+                <img src="${photo.download_url}" alt="${escapeHtml(decodedTitle)}" style="max-width: 100%; max-height: 280px; object-fit: contain;" onerror="this.parentElement.style.display='none'">
+              </div>
+            ` : ''}
+
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">PHOTO ID: ${photo.pid}</div>
+              <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem; line-height: 1.3;">
+                ${escapeHtml(decodedTitle)}
+              </h2>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem;">
+              <div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">CAMERA DEVICE</div>
+                <div style="font-weight: 700; color: var(--primary); margin-top: 2px;">📷 ${escapeHtml(photo.device || 'Unknown')}</div>
+              </div>
+              <div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">DATE UPLOADED</div>
+                <div style="font-weight: 600; color: var(--text-main); margin-top: 2px;">📅 ${uploadDate}</div>
+              </div>
+            </div>
+
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.4rem;">TAGS</div>
+              <div class="record-tags">
+                ${tagsList}
+              </div>
+            </div>
+
+            ${photo.download_url ? `
+              <div style="padding-top: 0.5rem; border-top: 1px solid var(--border-color);">
+                <a href="${photo.download_url}" target="_blank" class="btn btn-secondary btn-sm" style="width: 100%;">
+                  🔗 Open Raw Flickr Static Image
+                </a>
+              </div>
+            ` : ''}
+          </div>
+        `;
+
+      } catch (err) {
+        statusBadge.innerText = 'Error';
+        statusBadge.style.background = 'var(--danger-light)';
+        statusBadge.style.color = 'var(--danger)';
+        cardBody.innerHTML = `<div style="color: var(--danger); padding: 1rem;">Error: ${err.message}</div>`;
+        jsonViewer.innerText = `{\n  "error": "${err.message}"\n}`;
+      }
+    }
+
+    function switchTab(btn, panelId) {
+      const parent = btn.closest('.card-body');
+      parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      parent.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(panelId).classList.add('active');
+    }
+
+    function copyJson() {
+      if (!currentData) return;
+      navigator.clipboard.writeText(JSON.stringify(currentData, null, 2)).then(() => {
+        alert('JSON copied to clipboard!');
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPhoto(document.getElementById('input-pid').value);
+    });
+  </script>
+</body>
+</html>
+
