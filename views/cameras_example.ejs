@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Top Camera Devices • CASA0017 Flickr API</title>
+  <title>Top Cameras • Flickr Photo API</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="/js/modal.js"></script>
 </head>
@@ -13,110 +13,113 @@
   <nav class="navbar">
     <div class="nav-container">
       <a href="/" class="nav-brand">
-        <span>📸 Flickr DB API</span>
+        <span>Flickr Photo API</span>
         <span class="brand-badge">CASA0017</span>
       </a>
       <ul class="nav-links">
-        <li><a href="/" class="nav-link">📖 Documentation</a></li>
-        <li><a href="/examples/map" class="nav-link">🗺️ Live Map</a></li>
-        <li><a href="/examples/cameras" class="nav-link active">📷 Top Cameras</a></li>
-        <li><a href="/examples/photo/4279893539" class="nav-link">🔍 Photo Inspector</a></li>
-        <li><a href="/#downloads" class="nav-link">💾 Datasets</a></li>
+        <li><a href="/" class="nav-link">API Explorer</a></li>
+        <li><a href="/examples/map" class="nav-link">Map Demo</a></li>
+        <li><a href="/examples/cameras" class="nav-link active">Top Cameras</a></li>
+        <li><a href="/examples/photo/4279893539" class="nav-link">Photo Lookup</a></li>
       </ul>
     </div>
   </nav>
 
-  <div class="main-wrapper">
-    <!-- Header -->
-    <div class="section-header">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-        <div>
-          <h1 class="section-title">📷 Camera Analytics & Device Explorer</h1>
-          <p class="section-desc">Interactive explorer for <code>GET /data/topCamera</code> and <code>GET /data/cameraType/:camera</code>.</p>
-        </div>
-        <a href="/" class="btn btn-secondary btn-sm">← Back to API Docs</a>
-      </div>
-    </div>
+  <main class="main-wrapper">
 
-    <!-- Layout Grid -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
-      <!-- Top 30 Ranking Column -->
-      <div class="card" style="margin-bottom: 0;">
+    <header class="page-intro">
+      <div class="page-eyebrow">Interactive Example</div>
+      <h1 class="page-title">Top Camera Models</h1>
+      <p class="page-desc">
+        Left: top 30 cameras from <code>GET /data/topCamera</code>. Click any camera model to query matching photos using <code>GET /data/cameraType/:camera</code>.
+      </p>
+    </header>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; align-items: start;">
+
+      <!-- Left: Top 30 Cameras -->
+      <div class="card">
         <div class="card-header">
-          <div class="card-title-group">
-            <span class="method-badge method-get">GET</span>
-            <span class="card-title">Top 30 Camera Devices</span>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="method-badge">GET</span>
+            <span class="card-title">/data/topCamera</span>
           </div>
-          <span id="total-cameras-badge" class="badge" style="background: var(--primary-light); color: var(--primary); font-size: 0.8rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Loading...</span>
+          <span id="total-cameras-badge" style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono);">Loading...</span>
         </div>
         <div class="card-body">
-          <div class="form-group" style="margin-bottom: 1rem;">
-            <input type="text" id="camera-filter-input" class="form-input" placeholder="🔍 Filter camera name..." oninput="filterCameras(this.value)">
+          <div class="form-group" style="margin-bottom: 0.9rem;">
+            <input type="text" id="camera-filter-input" class="form-input" placeholder="Filter camera list..." oninput="filterCameras(this.value)">
           </div>
 
-          <div id="camera-list-container" class="camera-rank-list">
-            <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading top cameras from database...</div>
+          <div id="camera-list-container" class="camera-rank-list" style="max-height: 540px; overflow-y: auto;">
+            <div style="color: var(--text-muted); padding: 1rem;">Loading cameras...</div>
           </div>
         </div>
       </div>
 
-      <!-- Selected Camera Photos Column -->
-      <div class="card" style="margin-bottom: 0;">
+      <!-- Right: Photos for Selected Camera -->
+      <div class="card">
         <div class="card-header">
-          <div class="card-title-group">
-            <span class="method-badge method-get">GET</span>
-            <span class="card-title" id="selected-camera-title">Photos for Selected Camera</span>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="method-badge">GET</span>
+            <span class="card-title" id="selected-camera-title">/data/cameraType/:camera</span>
           </div>
-          <span id="selected-camera-count" class="badge" style="background: #f1f5f9; color: var(--text-muted); font-size: 0.8rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Click a camera</span>
+          <span id="selected-camera-count" style="font-size: 0.78rem; color: var(--primary); font-family: var(--font-mono); font-weight: 600;"></span>
         </div>
         <div class="card-body">
-          <div id="camera-photos-status" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-            Click on any camera in the list to fetch matching geotagged photos using <code>/data/cameraType/:camera</code>.
+          <div id="camera-photos-status" style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 0.9rem;">
+            Select a camera on the left to load its photos.
           </div>
 
-          <div id="camera-photos-container" style="max-height: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;">
-            <div style="text-align: center; color: var(--text-muted); padding: 3rem 1rem; border: 1px dashed var(--border-color); border-radius: var(--radius-md);">
-              Select a camera device from the left panel to explore photos.
-            </div>
-          </div>
+          <div id="camera-photos-container" style="max-height: 540px; overflow-y: auto;"></div>
         </div>
       </div>
+
     </div>
-  </div>
+
+  </main>
 
   <footer class="footer">
     <div class="footer-content">
-      <div>UCL Centre for Advanced Spatial Analysis (CASA) • CASA0017 Web Architecture</div>
-      <div>Flickr Geotagged Database API Explorer</div>
+      <div><strong>UCL Centre for Advanced Spatial Analysis (CASA)</strong> • CASA0017 Web Architecture</div>
+      <div>Flickr Spatial &amp; Metadata API</div>
     </div>
   </footer>
 
   <script>
     let topCamerasData = [];
+    let selectedDevice = '';
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
 
     async function loadTopCameras() {
       try {
         const res = await fetch('/data/topCamera');
         topCamerasData = await res.json();
-        
-        document.getElementById('total-cameras-badge').innerText = `${topCamerasData.length} Devices`;
-        renderCameraList(topCamerasData);
-
-        // Pre-select the top camera
+        document.getElementById('total-cameras-badge').textContent = `${topCamerasData.length} models`;
         if (topCamerasData.length > 0) {
-          selectCamera(topCamerasData[0].device);
+          selectedDevice = topCamerasData[0].device;
+          renderCameraList(topCamerasData);
+          selectCamera(selectedDevice);
         }
       } catch (err) {
-        document.getElementById('camera-list-container').innerHTML = `
-          <div style="color: var(--danger); padding: 1rem;">Failed to load top camera devices: ${err.message}</div>
-        `;
+        document.getElementById('camera-list-container').innerHTML =
+          `<div style="color: var(--danger);">${escapeHtml(err.message)}</div>`;
       }
     }
 
     function renderCameraList(list) {
       const container = document.getElementById('camera-list-container');
       if (!list || list.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted); padding: 1rem;">No cameras found.</div>';
+        container.innerHTML = '<div style="color: var(--text-muted); padding: 0.5rem;">No matching cameras.</div>';
         return;
       }
 
@@ -124,8 +127,9 @@
 
       container.innerHTML = list.map((item, index) => {
         const pct = Math.round((item.count / maxCount) * 100);
+        const isActive = item.device === selectedDevice ? 'active' : '';
         return `
-          <div class="camera-rank-item" onclick="selectCamera('${escapeHtml(item.device)}')">
+          <div class="camera-rank-item ${isActive}" onclick="selectCamera('${escapeHtml(item.device)}')">
             <div class="rank-number">#${index + 1}</div>
             <div class="rank-details">
               <div class="rank-device">${escapeHtml(item.device)}</div>
@@ -146,57 +150,59 @@
     }
 
     async function selectCamera(cameraName) {
-      document.getElementById('selected-camera-title').innerText = `Photos: ${cameraName}`;
+      selectedDevice = cameraName;
+      filterCameras(document.getElementById('camera-filter-input').value);
+
+      const endpoint = `/data/cameraType/${encodeURIComponent(cameraName)}`;
+      document.getElementById('selected-camera-title').textContent = endpoint;
       const countBadge = document.getElementById('selected-camera-count');
       const statusDiv = document.getElementById('camera-photos-status');
       const container = document.getElementById('camera-photos-container');
 
-      countBadge.innerText = 'Loading...';
-      statusDiv.innerHTML = `Querying <code>GET /data/cameraType/${encodeURIComponent(cameraName)}</code>...`;
-      container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">Fetching matching photos...</div>';
+      countBadge.textContent = 'Loading...';
+      statusDiv.innerHTML = `Fetching <code>GET ${escapeHtml(endpoint)}</code>...`;
+      container.innerHTML = '';
 
       try {
-        const res = await fetch(`/data/cameraType/${encodeURIComponent(cameraName)}`);
+        const res = await fetch(endpoint);
         const photos = await res.json();
 
-        countBadge.innerText = `${photos.length.toLocaleString()} Photos`;
-        statusDiv.innerHTML = `Found <b>${photos.length.toLocaleString()}</b> photos taken with <b>${escapeHtml(cameraName)}</b>.`;
+        countBadge.textContent = `${photos.length.toLocaleString()} photos`;
+        statusDiv.innerHTML = `Showing first ${Math.min(40, photos.length)} of <strong>${photos.length.toLocaleString()}</strong> photos taken with <strong>${escapeHtml(cameraName)}</strong>:`;
 
         if (photos.length === 0) {
-          container.innerHTML = '<div style="color: var(--text-muted); padding: 1rem;">No photos found.</div>';
+          container.innerHTML = '<div style="color: var(--text-muted);">No photos found.</div>';
           return;
         }
 
-        container.innerHTML = photos.slice(0, 50).map(p => `
-          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
-            <div>
-              <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);">Photo ID: ${p.pid}</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">📍 Coordinates: ${p.lat}, ${p.lon}</div>
-            </div>
-            <a href="/examples/photo/${p.pid}" target="_blank" class="btn btn-secondary btn-sm" style="white-space: nowrap;">
-              Inspect Details →
-            </a>
-          </div>
-        `).join('') + (photos.length > 50 ? `<div style="text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">Showing first 50 of ${photos.length.toLocaleString()} photos</div>` : '');
-
+        container.innerHTML = `
+          <table class="simple-table">
+            <thead>
+              <tr>
+                <th>Photo ID</th>
+                <th>Coordinates</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${photos.slice(0, 40).map(p => `
+                <tr>
+                  <td><code>${p.pid}</code></td>
+                  <td style="font-family: var(--font-mono); font-size: 0.8rem;">${p.lat}, ${p.lon}</td>
+                  <td style="text-align: right;">
+                    <a href="/examples/photo/${p.pid}" class="btn btn-secondary btn-sm">Lookup →</a>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
       } catch (err) {
-        statusDiv.innerHTML = `<span style="color: var(--danger);">Failed to load photos: ${err.message}</span>`;
-        container.innerHTML = '';
+        statusDiv.innerHTML = `<span style="color: var(--danger);">Error: ${escapeHtml(err.message)}</span>`;
       }
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
     }
 
     window.addEventListener('DOMContentLoaded', loadTopCameras);
   </script>
 </body>
 </html>
-

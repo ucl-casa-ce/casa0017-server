@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Map Explorer • CASA0017 Flickr API</title>
+  <title>Map Demo • Flickr Photo API</title>
   <link rel="stylesheet" href="/css/style.css">
-  <!-- Leaflet CDN -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/js/modal.js"></script>
@@ -16,157 +15,107 @@
   <nav class="navbar">
     <div class="nav-container">
       <a href="/" class="nav-brand">
-        <span>📸 Flickr DB API</span>
+        <span>Flickr Photo API</span>
         <span class="brand-badge">CASA0017</span>
       </a>
       <ul class="nav-links">
-        <li><a href="/" class="nav-link">📖 Documentation</a></li>
-        <li><a href="/examples/map" class="nav-link active">🗺️ Live Map</a></li>
-        <li><a href="/examples/cameras" class="nav-link">📷 Top Cameras</a></li>
-        <li><a href="/examples/photo/4279893539" class="nav-link">🔍 Photo Inspector</a></li>
-        <li><a href="/#downloads" class="nav-link">💾 Datasets</a></li>
+        <li><a href="/" class="nav-link">API Explorer</a></li>
+        <li><a href="/examples/map" class="nav-link active">Map Demo</a></li>
+        <li><a href="/examples/cameras" class="nav-link">Top Cameras</a></li>
+        <li><a href="/examples/photo/4279893539" class="nav-link">Photo Lookup</a></li>
       </ul>
     </div>
   </nav>
 
-  <div class="main-wrapper" style="padding-bottom: 2rem;">
-    <!-- Header -->
-    <div class="section-header" style="margin-bottom: 1.25rem;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-        <div>
-          <h1 class="section-title">🗺️ Spatial Radius Query Visualizer</h1>
-          <p class="section-desc">Interactive demonstration of <code>GET /data/:lat/:lon/:radius</code> and <code>GET /data/photoDescription/:pid</code> for Workshop 8 & 9.</p>
-        </div>
-        <a href="/" class="btn btn-secondary btn-sm">← Back to API Docs</a>
-      </div>
-    </div>
+  <main class="main-wrapper" style="padding-bottom: 2rem;">
 
-    <!-- Map Layout -->
+    <header class="page-intro" style="margin-bottom: 1.25rem;">
+      <div class="page-eyebrow">Interactive Example • Workshops 8 &amp; 9</div>
+      <h1 class="page-title">Spatial Radius Map Demo</h1>
+      <p class="page-desc">
+        Click anywhere on the map or adjust the coordinates below to call <code>GET /data/:lat/:lon/:radius</code>. Click any marker to load its metadata from <code>GET /data/photoDescription/:pid</code>.
+      </p>
+    </header>
+
     <div class="map-layout">
-      <!-- Controls Panel -->
-      <div class="map-controls-panel">
-        <div>
-          <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.25rem;">Search Parameters</h3>
-          <p style="font-size: 0.8rem; color: var(--text-muted);">Click anywhere on the map or type coordinates below to search for photos.</p>
-        </div>
-
-        <!-- Presets -->
+      <!-- Left: Simple Controls & Code -->
+      <aside class="map-controls-panel">
         <div class="form-group">
-          <label class="form-label">City Presets</label>
-          <div class="quick-pills" style="margin-bottom: 0;">
+          <span class="form-label">City Presets</span>
+          <div class="quick-pills" style="margin-top: 0.2rem;">
             <button type="button" class="quick-pill" onclick="setCoordinates(51.5074, -0.1278, 10)">London</button>
             <button type="button" class="quick-pill" onclick="setCoordinates(53.4808, -2.2426, 15)">Manchester</button>
             <button type="button" class="quick-pill" onclick="setCoordinates(55.9533, -3.1883, 15)">Edinburgh</button>
             <button type="button" class="quick-pill" onclick="setCoordinates(51.4545, -2.5879, 15)">Bristol</button>
-            <button type="button" class="quick-pill" onclick="setCoordinates(51.514756, -0.104345, 1000)" style="background: var(--primary-light); color: var(--primary); font-weight: 700;">🌐 All UK</button>
           </div>
         </div>
 
-        <!-- Lat / Lon -->
-        <div class="form-group">
-          <label class="form-label" for="map-lat">Latitude (WGS84)</label>
-          <input type="number" step="any" id="map-lat" class="form-input" value="51.5074">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+          <div class="form-group">
+            <label class="form-label" for="map-lat">Latitude</label>
+            <input type="number" step="any" id="map-lat" class="form-input" value="51.5074">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="map-lon">Longitude</label>
+            <input type="number" step="any" id="map-lon" class="form-input" value="-0.1278">
+          </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="map-lon">Longitude (WGS84)</label>
-          <input type="number" step="any" id="map-lon" class="form-input" value="-0.1278">
-        </div>
-
-        <!-- Radius Slider -->
-        <div class="form-group">
-          <div style="display: flex; justify-content: space-between;">
-            <label class="form-label" for="map-radius">Radius (Kilometers)</label>
-            <span id="radius-val" style="font-weight: 700; font-size: 0.85rem; color: var(--primary);">10 km</span>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="form-label" for="map-radius">Radius (km)</label>
+            <span id="radius-val" style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; color: var(--primary);">10 km</span>
           </div>
           <input type="range" id="map-radius" min="1" max="50" value="10" style="width: 100%; cursor: pointer;" oninput="updateRadius(this.value)">
         </div>
 
-        <!-- Fetch Button -->
         <button type="button" class="btn btn-primary" id="fetch-btn" onclick="fetchPhotos()" style="width: 100%;">
-          <span>🔍 Query Photos</span>
+          Search Photos
         </button>
 
-        <!-- Status / Stats -->
-        <div id="query-stats" style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.85rem; font-size: 0.85rem;">
-          <div style="font-weight: 600; margin-bottom: 0.25rem;">Query Status:</div>
-          <div id="stats-text" style="color: var(--text-muted);">Ready to query. Click button or map.</div>
-          <div id="api-call-url" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--primary); margin-top: 0.5rem; word-break: break-all;"></div>
+        <!-- Clean API Status Box -->
+        <div style="background: var(--bg-page); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem; font-size: 0.84rem;">
+          <div id="stats-text" style="color: var(--text-secondary);">Ready to search.</div>
+          <div id="api-call-url" style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--primary); margin-top: 0.35rem; word-break: break-all;"></div>
         </div>
 
-        <!-- Code Snippet Hint for Students -->
-        <div class="coursework-box" style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <b>💡 How to do this in your coursework:</b>
+        <!-- Compact Code Reference -->
+        <div style="margin-top: auto; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden;">
+          <div class="response-tabs">
+            <button type="button" class="tab-btn active" style="padding: 0.45rem 0.75rem; font-size: 0.76rem;" onclick="switchCodeTab(this, 'code-fetch')">fetch()</button>
+            <button type="button" class="tab-btn" style="padding: 0.45rem 0.75rem; font-size: 0.76rem;" onclick="switchCodeTab(this, 'code-jquery')">jQuery</button>
           </div>
-
-          <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow: hidden;">
-            <div class="response-tabs" style="background: #f8fafc; border-bottom: 1px solid var(--border-color);">
-              <button type="button" class="tab-btn active" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;" onclick="switchCodeTab(this, 'tab-code-js')">Browser (fetch)</button>
-              <button type="button" class="tab-btn" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;" onclick="switchCodeTab(this, 'tab-code-node')">Node.js</button>
-              <button type="button" class="tab-btn" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;" onclick="switchCodeTab(this, 'tab-code-jquery')">jQuery</button>
-            </div>
-
-            <div id="tab-code-js" class="tab-panel active" style="padding: 0;">
-              <pre class="code-block" style="margin: 0; padding: 0.6rem; font-size: 0.75rem; border-radius: 0; max-height: 180px; overflow-y: auto;">// Browser fetch + Leaflet
-const lat = 51.5074, lon = -0.1278, radius = 10;
-
-fetch(`/data/${lat}/${lon}/${radius}`)
+          <div id="code-fetch" class="tab-panel active" style="padding: 0;">
+            <pre class="code-block" style="background: var(--bg-code); padding: 0.75rem; font-size: 0.74rem; max-height: 170px;">fetch(`/data/${lat}/${lon}/${radius}`)
   .then(res => res.json())
   .then(photos => {
     photos.forEach(p => {
-      L.marker([p.lat, p.lon])
-        .bindPopup(`Photo ID: ${p.pid}`)
-        .addTo(map);
+      L.marker([p.lat, p.lon]).addTo(map);
     });
-  })
-  .catch(err => console.error('Fetch error:', err));</pre>
-            </div>
-
-            <div id="tab-code-node" class="tab-panel" style="padding: 0;">
-              <pre class="code-block" style="margin: 0; padding: 0.6rem; font-size: 0.75rem; border-radius: 0; max-height: 180px; overflow-y: auto;">// Node.js (v18+ native fetch)
-async function fetchPhotos(lat, lon, radius) {
-  const url = `http://localhost:3000/data/${lat}/${lon}/${radius}`;
-  try {
-    const res = await fetch(url);
-    const photos = await res.json();
-    console.log(`Retrieved ${photos.length} photos`);
-    return photos;
-  } catch (err) {
-    console.error('Node fetch error:', err.message);
-  }
-}
-
-fetchPhotos(51.5074, -0.1278, 10);</pre>
-            </div>
-
-            <div id="tab-code-jquery" class="tab-panel" style="padding: 0;">
-              <pre class="code-block" style="margin: 0; padding: 0.6rem; font-size: 0.75rem; border-radius: 0; max-height: 180px; overflow-y: auto;">// jQuery getJSON (Workshop 8-9)
-var lat = 51.5074, lon = -0.1278, radius = 10;
-
-$.getJSON('/data/' + lat + '/' + lon + '/' + radius, function(photos) {
+  });</pre>
+          </div>
+          <div id="code-jquery" class="tab-panel" style="padding: 0;">
+            <pre class="code-block" style="background: var(--bg-code); padding: 0.75rem; font-size: 0.74rem; max-height: 170px;">$.getJSON(`/data/${lat}/${lon}/${radius}`, function(photos) {
   $.each(photos, function(i, p) {
-    L.marker([p.lat, p.lon])
-      .bindPopup('Photo ID: ' + p.pid)
-      .addTo(map);
+    L.marker([p.lat, p.lon]).addTo(map);
   });
 });</pre>
-            </div>
           </div>
         </div>
-      </div>
+      </aside>
 
-      <!-- Map Display Panel -->
+      <!-- Right: Map -->
       <div class="map-view-panel">
         <div id="map-container"></div>
       </div>
     </div>
-  </div>
+
+  </main>
 
   <footer class="footer">
     <div class="footer-content">
-      <div>UCL Centre for Advanced Spatial Analysis (CASA) • CASA0017 Web Architecture</div>
-      <div>Flickr Geotagged Database API Explorer</div>
+      <div><strong>UCL Centre for Advanced Spatial Analysis (CASA)</strong> • CASA0017 Web Architecture</div>
+      <div>Flickr Spatial &amp; Metadata API</div>
     </div>
   </footer>
 
@@ -174,11 +123,19 @@ $.getJSON('/data/' + lat + '/' + lon + '/' + radius, function(photos) {
     let map, searchCircle;
     let markersLayer = L.layerGroup();
 
-    // Initialize Leaflet Map centered on London
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     function initMap() {
       map = L.map('map-container').setView([51.5074, -0.1278], 11);
 
-      // OpenStreetMap Tiles
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -186,21 +143,19 @@ $.getJSON('/data/' + lat + '/' + lon + '/' + radius, function(photos) {
 
       markersLayer.addTo(map);
 
-      // Click on map to update coordinates
       map.on('click', function(e) {
         document.getElementById('map-lat').value = e.latlng.lat.toFixed(6);
         document.getElementById('map-lon').value = e.latlng.lng.toFixed(6);
         fetchPhotos();
       });
 
-      // Initial query
       fetchPhotos();
     }
 
     function updateRadius(val) {
-      document.getElementById('radius-val').innerText = val + ' km';
+      document.getElementById('radius-val').textContent = val + ' km';
       if (searchCircle) {
-        searchCircle.setRadius(val * 1000); // Leaflet radius is in meters
+        searchCircle.setRadius(val * 1000);
       }
     }
 
@@ -219,7 +174,7 @@ $.getJSON('/data/' + lat + '/' + lon + '/' + radius, function(photos) {
       const radius = parseFloat(document.getElementById('map-radius').value);
 
       if (isNaN(lat) || isNaN(lon) || isNaN(radius)) {
-        alert('Please enter valid coordinates and radius');
+        alert('Please enter valid coordinates and radius.');
         return;
       }
 
@@ -228,54 +183,49 @@ $.getJSON('/data/' + lat + '/' + lon + '/' + radius, function(photos) {
       const apiCallUrl = document.getElementById('api-call-url');
 
       fetchBtn.disabled = true;
-      fetchBtn.innerText = '⏳ Querying Database...';
-      statsText.innerText = 'Executing Great-Circle DISTANCE query on MySQL...';
+      fetchBtn.textContent = 'Searching...';
+      statsText.textContent = 'Querying database...';
 
-      // Update or create search circle
       if (searchCircle) {
         map.removeLayer(searchCircle);
       }
       searchCircle = L.circle([lat, lon], {
-        color: '#0284c7',
-        fillColor: '#38bdf8',
-        fillOpacity: 0.15,
-        radius: radius * 1000 // km to meters
+        color: '#2563eb',
+        weight: 2,
+        fillColor: '#3b82f6',
+        fillOpacity: 0.12,
+        radius: radius * 1000
       }).addTo(map);
 
-      // Clear previous markers
       markersLayer.clearLayers();
 
       const startTime = performance.now();
       const endpoint = `/data/${lat}/${lon}/${radius}`;
-      apiCallUrl.innerHTML = `<code>GET ${endpoint}</code>`;
+      apiCallUrl.textContent = `GET ${endpoint}`;
 
       try {
         const response = await fetch(endpoint);
-        if (!response.ok) {
-          throw new Error(`Server returned HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        const duration = (performance.now() - startTime).toFixed(0);
+        const duration = Math.round(performance.now() - startTime);
 
-        statsText.innerHTML = `✅ Found <b>${data.length.toLocaleString()}</b> photos in <b>${duration}ms</b>.`;
+        statsText.innerHTML = `Found <strong>${data.length.toLocaleString()}</strong> photos (${duration} ms)`;
 
-        // Render markers
         data.forEach(photo => {
           const marker = L.circleMarker([photo.lat, photo.lon], {
             radius: 5,
-            fillColor: '#ef4444',
+            fillColor: '#e11d48',
             color: '#ffffff',
             weight: 1.5,
             opacity: 1,
             fillOpacity: 0.85
           });
 
-          // Bind popup that queries metadata on click
           marker.bindPopup(`
-            <div style="font-family: var(--font-family); min-width: 200px;">
-              <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">PHOTO ID: ${photo.pid}</div>
-              <div id="popup-content-${photo.pid}" style="margin-top: 0.4rem;">
-                <div style="color: #64748b; font-size: 0.8rem;">Loading photo details...</div>
+            <div style="font-family: var(--font-sans); min-width: 190px;">
+              <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">Photo ID: ${photo.pid}</div>
+              <div id="popup-content-${photo.pid}" style="margin-top: 0.35rem; font-size: 0.8rem; color: #64748b;">
+                Loading metadata...
               </div>
             </div>
           `);
@@ -283,12 +233,11 @@ $.getJSON('/data/' + lat + '/' + lon + '/' + radius, function(photos) {
           marker.on('click', () => loadPhotoDetails(photo.pid));
           markersLayer.addLayer(marker);
         });
-
       } catch (err) {
-        statsText.innerHTML = `<span style="color: #ef4444;">❌ Error: ${err.message}</span>`;
+        statsText.innerHTML = `<span style="color: var(--danger);">Error: ${escapeHtml(err.message)}</span>`;
       } finally {
         fetchBtn.disabled = false;
-        fetchBtn.innerText = '🔍 Query Photos';
+        fetchBtn.textContent = 'Search Photos';
       }
     }
 
@@ -301,29 +250,34 @@ $.getJSON('/data/' + lat + '/' + lon + '/' + radius, function(photos) {
         const data = await res.json();
         if (data && data.length > 0) {
           const photo = data[0];
-          let decodedTitle = photo.description ? decodeURIComponent(photo.description.replace(/\+/g, ' ')) : 'Untitled';
-          let imgHtml = photo.download_url ? `<img src="${photo.download_url}" style="width: 100%; max-height: 120px; object-fit: cover; border-radius: 4px; margin: 4px 0;" onerror="this.style.display='none'">` : '';
+          let decodedTitle = 'Untitled';
+          try {
+            decodedTitle = photo.description ? decodeURIComponent(photo.description.replace(/\+/g, ' ')) : 'Untitled';
+          } catch {
+            decodedTitle = photo.description || 'Untitled';
+          }
+          const imgHtml = photo.download_url
+            ? `<img src="${escapeHtml(photo.download_url)}" style="width: 100%; max-height: 110px; object-fit: cover; border-radius: 4px; margin: 4px 0;" onerror="this.style.display='none'">`
+            : '';
 
           container.innerHTML = `
             ${imgHtml}
-            <div style="font-weight: 700; font-size: 0.9rem; margin-top: 2px;">${decodedTitle}</div>
-            <div style="margin-top: 4px; font-size: 0.75rem;">
-              <span style="background: #e0f2fe; color: #0284c7; padding: 2px 6px; border-radius: 4px; font-weight: 600;">📷 ${photo.device || 'Unknown Camera'}</span>
-            </div>
+            <div style="font-weight: 600; font-size: 0.86rem; color: #0f172a;">${escapeHtml(decodedTitle)}</div>
+            <div style="margin-top: 4px; font-size: 0.75rem; color: #2563eb; font-weight: 500;">${escapeHtml(photo.device || 'Unknown Camera')}</div>
             <div style="margin-top: 6px;">
-              <a href="/examples/photo/${photo.pid}" target="_blank" style="font-size: 0.75rem; color: #0284c7; font-weight: 600; text-decoration: none;">View Full Details & JSON →</a>
+              <a href="/examples/photo/${photo.pid}" style="font-size: 0.75rem; color: #2563eb; font-weight: 600; text-decoration: none;">Inspect Photo →</a>
             </div>
           `;
         } else {
-          container.innerHTML = '<div style="font-size: 0.8rem; color: #64748b;">No metadata available.</div>';
+          container.innerHTML = 'No metadata found.';
         }
-      } catch (e) {
-        container.innerHTML = '<div style="font-size: 0.8rem; color: #ef4444;">Failed to load details.</div>';
+      } catch {
+        container.innerHTML = 'Failed to load metadata.';
       }
     }
 
     function switchCodeTab(btn, panelId) {
-      const parent = btn.closest('.coursework-box');
+      const parent = btn.parentElement.parentElement;
       parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       parent.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
@@ -334,4 +288,3 @@ $.getJSON('/data/' + lat + '/' + lon + '/' + radius, function(photos) {
   </script>
 </body>
 </html>
-
